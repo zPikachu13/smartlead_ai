@@ -1,0 +1,11 @@
+# Sanal Ortam
+venv/
+__pycache__/
+*.pyc
+
+# Gizli Ayarlar
+.env
+
+# Veritabanı
+*.db
+smartlead.db

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AdaPlant AI - Yönetim Paneli</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: #f7fafc; color: #2d3748; padding: 2rem; }
+        .header { display: flex; justify-content: space-between; align-items: center; max-width: 1100px; margin: 0 auto 2rem auto; }
+        h1 { color: #1b4332; }
+        .btn { background: #2d6a4f; color: white; text-decoration: none; padding: 0.6rem 1.2rem; border-radius: 6px; font-weight: bold; font-size: 0.9rem; }
+        .card { background: white; max-width: 1100px; margin: 0 auto; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); padding: 1.5rem; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 1rem; border-bottom: 1px solid #edf2f7; }
+        th { background: #f8fafc; color: #4a5568; font-weight: 600; }
+        tr:hover { background: #f8fafc; }
+        .badge { background: #d8f3dc; color: #1b4332; padding: 0.3rem 0.6rem; border-radius: 20px; font-size: 0.8rem; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+ <div class="header">
+    <div style="display: flex; align-items: center; gap: 14px;">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="AdaPlant Logo" style="height: 44px; width: auto; object-fit: contain;">
+        <div>
+            <h1 style="font-size: 1.5rem;">AdaPlant Lead Yönetim Paneli</h1>
+            <p style="color: #718096; margin-top: 0.2rem; font-size: 0.9rem;">Toplanan potansiyel müşteri talepleri</p>
+        </div>
+    </div>
+    <a href="/" class="btn">&larr; Karşılama Sayfasına Dön</a>
+</div>
+
+    <div class="card">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Müşteri Adı</th>
+                    <th>Telefon</th>
+                    <th>Mesaj / İlgi Alanı</th>
+                    <th>Kayıt Tarihi</th>
+                </tr>
+            </thead>
+            <tbody id="leadTableBody">
+                <tr><td colspan="5" style="text-align: center; color: #a0aec0;">Yükleniyor...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        async function leadleriYukle() {
+            try {
+                const res = await fetch('/api/leads');
+                const data = await res.json();
+                const tbody = document.getElementById('leadTableBody');
+
+                if (data.basari && data.leadler.length > 0) {
+                    tbody.innerHTML = '';
+                    data.leadler.forEach(l => {
+                        tbody.innerHTML += `
+                            <tr>
+                                <td><span class="badge">#${l.id}</span></td>
+                                <td><strong>${l.isim}</strong></td>
+                                <td>${l.telefon}</td>
+                                <td>${l.mesaj || '-'}</td>
+                                <td style="color: #718096; font-size: 0.85rem;">${l.tarih}</td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Henüz kayıtlı lead bulunmuyor.</td></tr>';
+                }
+            } catch (err) {
+                document.getElementById('leadTableBody').innerHTML = '<tr><td colspan="5" style="text-align: center; color: red;">Veriler alınamadı.</td></tr>';
+            }
+        }
+
+        leadleriYukle();
+    </script>
+</body>
+</html>

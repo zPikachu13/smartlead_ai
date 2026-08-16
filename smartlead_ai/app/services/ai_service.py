@@ -1,37 +1,49 @@
 import os
 import json
-from groq import Groq
+import requests
 from dotenv import load_dotenv
 
 load_dotenv()
 
-# Groq istemcisini başlat
-api_key = os.getenv("GROQ_API_KEY")
-client = Groq(api_key=api_key)
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 
 def analyze_lead(text):
-    """Müşteri metnini Groq ile analiz eder ve sözlük olarak döner."""
+    """Müşteri metnini Groq API ile analiz eder."""
+    if not GROQ_API_KEY:
+        return {"success": False, "error": "GROQ_API_KEY bulunamadi."}
+
+    headers = {
+        "Authorization": f"Bearer {GROQ_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
     system_prompt = (
-        "Sen bir müşteri analiz uzmanısın. Yanıtını JSON formatında ver. "
-        "Alanlar: score (1-100), urgency (Düşük/Orta/Yüksek), summary (özet), reply (yanıt)."
+        "Sen bir musteri analiz uzmanisin. Yanitini JSON formatinda ver. "
+        "Alanlar: score (1-100), urgency (Dusuk/Orta/Yuksek), summary (ozet), reply (yanit)."
     )
-    user_prompt = f"Mesajı analiz et: {text}"
+
+    payload = {
+        "model": "llama-3.3-70b-versatile",
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": f"Mesaji analiz et: {text}"}
+        ],
+        "response_format": {"type": "json_object"},
+        "temperature": 0.2
+    }
 
     try:
-        response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            temperature=0.2,
-            response_format={"type": "json_object"}
-        )
+        response = requests.post(GROQ_API_URL, headers=headers, json=payload, timeout=20)
         
-        # Gelen JSON metnini Python sözlüğüne (dict) çeviriyoruz
-        raw_result = response.choices[0].message.content
-        data = json.loads(raw_result)
+        if response.status_code != 200:
+            return {"success": False, "error": f"Groq Hatasi: {response.text}"}
+
+        result_json = response.json()
+        raw_content = result_json["choices"][0]["message"]["content"]
+        data = json.loads(raw_content)
+        
         return {"success": True, "data": data}
 
     except Exception as e:

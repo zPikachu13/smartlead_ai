@@ -1,5 +1,4 @@
 import os
-import json
 import requests
 from dotenv import load_dotenv
 
@@ -8,43 +7,66 @@ load_dotenv()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 
+# Modül A: İşletmenizin kişiliği ve kuralları
+BUSINESS_CONTEXT = os.getenv(
+    "BUSINESS_CONTEXT",
+    "Sen bir müşteri asistanısın. Müşterilerin sorularını nazik, profesyonel ve Türkçe olarak yanıtla. "
+    "Müşteriyi iletişim bilgilerini bırakmaya teşvik et."
+)
 
-def analyze_lead(text):
-    """Müşteri metnini Groq API ile analiz eder."""
-    if not GROQ_API_KEY:
-        return {"success": False, "error": "GROQ_API_KEY bulunamadi."}
 
-    headers = {
-        "Authorization": f"Bearer {GROQ_API_KEY}",
-        "Content-Type": "application/json"
-    }
+class AIServiceError(Exception):
+    """Yapay zeka servisine özel hata sınıfı."""
+    pass
 
-    system_prompt = (
-        "Sen bir musteri analiz ve destek uzmanisin. Yanitini JSON formatinda ver. "
-        "Alanlar: score (1-100 arasi puan), urgency (Dusuk/Orta/Yuksek), summary (kisa ozet), reply (musteriye verilecek nazik ve aciklayici yanit)."
-    )
 
-    payload = {
-        "model": "llama-3.1-8b-instant",
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": f"Mesaji analiz et ve yanitla: {text}"}
-        ],
-        "response_format": {"type": "json_object"},
-        "temperature": 0.2
-    }
+class AIService:
+    def __init__(self):
+        self.api_key = GROQ_API_KEY
+        self.model = "llama-3.1-8b-instant"  
 
-    try:
-        response = requests.post(GROQ_API_URL, headers=headers, json=payload, timeout=20)
+        # Yönergede belirtilen güncel model
+    def yanit_uret(self, mesaj, gecmis=None):
+        """Kullanıcı mesajına Groq API veya Demo Modu ile yanıt üretir."""
         
-        if response.status_code != 200:
-            return {"success": False, "error": f"Groq Hatasi: {response.text}"}
+        # 1. API Anahtarı Yoksa Demo Modu
+        if not self.api_key:
+            return "Merhaba! Sistem şu anda demo modunda çalışmaktadır. Sorunuz alındı, en kısa sürede dönüş yapacağız."
 
-        result_json = response.json()
-        raw_content = result_json["choices"][0]["message"]["content"]
-        data = json.loads(raw_content)
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+
+        messages = [
+            {"role": "system", "content": BUSINESS_CONTEXT}
+        ]
         
-        return {"success": True, "data": data}
+        if gecmis and isinstance(gecmis, list):
+            messages.extend(gecmis)
+            
+        messages.append({"role": "user", "content": mesaj})
 
-    except Exception as e:
-        return {"success": False, "error": str(e)}
+        payload = {
+            "model": self.model,
+            "messages": messages,
+            "temperature": 0.3
+        }
+
+        try:
+            response = requests.post(GROQ_API_URL, headers=headers, json=payload, timeout=15)
+            
+            if response.status_code == 200:
+                result_json = response.json()
+                return result_json["choices"][0]["message"]["content"]
+            else:
+                # Groq geçici hata verirse devreye giren yedek (Demo)
+                return "Talebinizi aldık. Uzman ekibimiz detaylı bilgi için sizinle iletişime geçecektir."
+
+        except Exception:
+            # Bağlantı kopsa dahi kullanıcıya kibar yanıt döner
+            return "Şu anda sistemsel bir yoğunluk var. Lütfen formu doldurarak iletişim bilginizi bırakın."
+
+
+# Tekil servis örneği
+ai_service = AIService()

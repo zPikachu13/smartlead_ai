@@ -20,15 +20,15 @@ def analyze_lead(text):
     }
 
     system_prompt = (
-        "Sen bir musteri analiz uzmanisin. Yanitini JSON formatinda ver. "
-        "Alanlar: score (1-100), urgency (Dusuk/Orta/Yuksek), summary (ozet), reply (yanit)."
+        "Sen bir musteri analiz ve destek uzmanisin. Yanitini JSON formatinda ver. "
+        "Alanlar: score (1-100 arasi puan), urgency (Dusuk/Orta/Yuksek), summary (kisa ozet), reply (musteriye verilecek nazik ve aciklayici yanit)."
     )
 
     payload = {
-        "model": "llama-3.3-70b-versatile",
+        "model": "llama-3.1-70b-versatile",
         "messages": [
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": f"Mesaji analiz et: {text}"}
+            {"role": "user", "content": f"Mesaji analiz et ve yanitla: {text}"}
         ],
         "response_format": {"type": "json_object"},
         "temperature": 0.2

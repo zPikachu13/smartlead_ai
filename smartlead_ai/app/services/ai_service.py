@@ -17,13 +17,15 @@ BUSINESS_CONTEXT = os.getenv(
 class AIService:
     def __init__(self):
         self.api_key = GROQ_API_KEY
-        # Groq üzerinde aktif olan güncel modeller listesi
-        self.models = ["llama-3.1-8b-instant", "llama3-8b-8192", "gemma2-9b-it"]
+        # Groq'ta aktif olan güncel modeller
+        self.models = [
+            "openai/gpt-oss-20b",
+            "openai/gpt-oss-120b",
+            "qwen/qwen3.6-27b"
+        ]
 
     def yanit_uret(self, mesaj, gecmis=None):
-        """Kullanıcı mesajına Groq API veya Fallback ile yanıt üretir."""
-        
-        # 1. API Anahtarı Kontrolü
+        """Kullanıcı mesajına Groq API ile canlı yanıt üretir."""
         if not self.api_key:
             print("HATA: GROQ_API_KEY bulunamadı!")
             return "Merhaba! Sistem şu anda demo modunda çalışmaktadır. Sorunuz alındı, en kısa sürede dönüş yapacağız."
@@ -42,7 +44,7 @@ class AIService:
             
         messages.append({"role": "user", "content": mesaj})
 
-        # Modelleri sırayla dener
+        # Aktif modelleri sırayla dener
         for model in self.models:
             payload = {
                 "model": model,
@@ -51,7 +53,7 @@ class AIService:
             }
 
             try:
-                response = requests.post(GROQ_API_URL, headers=headers, json=payload, timeout=12)
+                response = requests.post(GROQ_API_URL, headers=headers, json=payload, timeout=15)
                 
                 if response.status_code == 200:
                     result_json = response.json()
@@ -62,7 +64,7 @@ class AIService:
                 print(f"Bağlantı Hatası ({model}): {str(e)}")
                 continue
 
-        # Tüm modeller başarısız olursa devreye giren Fallback
+        # Beklenmedik bir kesinti durumunda yedek yanıt
         return "Talebinizi aldık. Uzman ekibimiz detaylı bilgi için sizinle iletişime geçecektir."
 
 

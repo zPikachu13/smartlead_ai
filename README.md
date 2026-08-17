@@ -7,8 +7,7 @@ Bu proje, işletmeler için gelen müşteri sorularını yapay zekâ destekli (G
 ## 🚀 Canlı Bağlantılar
 
 - **Canlı Backend (Render):** `https://adaplant-ai.onrender.com`
-- **Canlı Frontend & Panel (Wix):** `[Wix Canlı Site Linkinizi Buraya Yapıştırın]`
-- **GitHub Deposu:** `[GitHub Repo Linkinizi Buraya Yapıştırın]`
+- **Canlı Frontend (Wix):** `https://adayigitdemirtas.wixstudio.com/adaplant`
 
 ---
 
